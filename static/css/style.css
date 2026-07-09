@@ -165,9 +165,9 @@ button:hover{
         left:8px;
         right:8px;
         width:auto;
-        padding:20px;
+        padding:12px;
         border-radius:15px;
-        max-height:60vh;
+        max-height:45vh;
         overflow-y:auto;
     }
 
@@ -180,8 +180,8 @@ button:hover{
     }
 
     button{
-        padding:16px;
-        font-size:17px;
+        padding:12px;
+        font-size:15px;
         margin-top:8px;
     }
 
@@ -192,8 +192,8 @@ button:hover{
     }
 
     .info-card{
-        padding:14px;
-        font-size:16px;
+        padding:8px;
+        font-size:14px;
     }
 
 }
