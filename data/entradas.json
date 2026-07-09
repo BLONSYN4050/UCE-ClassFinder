@@ -1,0 +1,39 @@
+[
+    {
+        "id":"america",
+        "nombre":"Av. América",
+        "lat":-0.198995,
+        "lng":-78.500627
+    },
+    {
+        "id":"quimica",
+        "nombre":"Facultad de Ingeniería Química",
+        "lat":-0.199175,
+        "lng":-78.511038
+    },
+    {
+        "id":"bolivia",
+        "nombre":"Calle Bolivia",
+        "lat":-0.201476,
+        "lng":-78.508075
+    },
+    {
+        "id":"ingenieria",
+        "nombre":"Ingeniería",
+        "lat":-0.197855,
+        "lng":-78.502290
+    },
+    {
+        "id":"biblioteca",
+        "nombre":"Biblioteca General",
+        "lat":-0.197426,
+        "lng":-78.506158
+    },
+    {
+        "id":"Aulas A",
+        "nombre":"Edificio de Aulas A",
+        "lat":-0.197174,
+        "lng":-78.504761
+    }
+    
+]

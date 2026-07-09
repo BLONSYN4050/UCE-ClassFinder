@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>UCE-ClassFinder</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+
+            min-height:100vh;
+            font-family:'Segoe UI', Arial, sans-serif;
+
+            background:
+            linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
+            url("{{ url_for('static', filename='ima/campus.png') }}");
+
+            background-size:cover;
+            background-position:center;
+            background-repeat:no-repeat;
+
+            display:flex;
+            justify-content:center;
+
+            padding:40px 0;
+        }
+
+       .card{
+            width:520px;
+            max-width:92%;
+            background:rgba(255,255,255,0.15);
+            backdrop-filter:blur(18px);
+            border:1px solid rgba(255,255,255,0.2);
+            border-radius:25px;
+            padding:35px;
+            text-align:center;
+            color:white;
+            box-shadow:0 10px 35px rgba(0,0,0,0.35);
+            max-height:90vh;
+            overflow-y:auto;
+            scroll-behavior:smooth;
+        }
+
+        .logo{
+
+            width:120px;
+            margin-bottom:15px;
+        }
+
+        h1{
+
+            font-size:32px;
+            margin-bottom:10px;
+        }
+
+        .subtitulo{
+
+            font-size:16px;
+            margin-bottom:30px;
+            opacity:0.9;
+        }
+
+        .descripcion{
+
+            margin-bottom:25px;
+            line-height:1.5;
+            font-size:15px;
+        }
+
+        select{
+
+            width:100%;
+            padding:14px;
+            border:none;
+            border-radius:12px;
+            font-size:16px;
+            outline:none;
+            margin-bottom:20px;
+        }
+
+        button{
+
+            width:100%;
+            padding:15px;
+            border:none;
+            border-radius:12px;
+            background:#003366;
+            color:white;
+            font-size:17px;
+            cursor:pointer;
+            transition:0.3s;
+        }
+
+        button:hover{
+
+            transform:translateY(-2px);
+        }
+
+        .footer{
+
+            margin-top:25px;
+            font-size:13px;
+            opacity:0.8;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+
+        <img
+            src="{{ url_for('static', filename='ima/logo_uce.png') }}"
+            class="logo"
+            alt="Logo UCE">
+
+        <h1>UCE-ClassFinder</h1>
+
+        <p class="subtitulo">
+            Universidad Central del Ecuador
+        </p>
+
+        <p class="descripcion">
+            Sistema Inteligente de Orientación Académica para la búsqueda y navegación hacia aulas, laboratorios y espacios universitarios.
+        </p>
+
+        <form id="formRuta">
+            <select name="destino" id="destino">
+                {% for aula in aulas %}
+                    <option value="{{ aula }}">
+                        {{ aula }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">
+                🚀 Buscar Ruta
+            </button>
+
+        </form>
+
+        <div id="resultado" style="display:none; margin-top:20px; text-align:left;"></div>
+
+        <div class="footer">
+            Facultad de Ingeniería y Ciencias Aplicadas
+        </div>
+
+    </div>
+
+</body>
+
+<script>
+    
+    document.getElementById("formRuta").addEventListener("submit", function(e){
+        e.preventDefault();
+
+        let formData = new FormData(this);
+
+        fetch("/ruta", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if(!data.ok){
+                alert("Aula no encontrada");
+                return;
+            }
+
+            document.getElementById("resultado").style.display = "block";
+
+            document.getElementById("resultado").innerHTML = `
+                <div style="
+                    background: rgba(255,255,255,0.2);
+                    padding: 20px;
+                    border-radius: 15px;
+                    color: white;
+                    backdrop-filter: blur(10px);
+                ">
+                    <h3>📍 Ruta generada</h3>
+
+                    <p><b>Destino:</b> ${data.destino}</p>
+                    <p><b>Edificio:</b> ${data.edificio}</p>
+                    <p><b>Piso:</b> ${data.piso}</p>
+
+                    <br>
+
+                        <button onclick='window.location.href="/mapa?destino=${data.destino}"'                        style="
+                            width:100%;
+                            padding:12px;
+                            border:none;
+                            border-radius:10px;
+                            background:#00c853;
+                            color:white;
+                            cursor:pointer;
+                            font-size:16px;
+                        ">
+                        🗺 Ir al mapa
+                    </button>
+                </div>
+            `;
+        });
+    });
+</script>
+
+</html>

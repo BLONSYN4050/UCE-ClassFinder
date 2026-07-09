@@ -1,0 +1,49 @@
+{
+  "Sala A": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Planta Baja"},
+  "Sala B": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Planta Baja"},
+  "Sala 1": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Planta Baja"},
+  "Sala 2": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Planta Baja"},
+
+  "R7": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Segundo Piso"},
+  "R8": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Segundo Piso"},
+
+  "Lab 1": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Tercer Piso"},
+  "Lab 2": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Tercer Piso"},
+  "Lab 3": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Tercer Piso"},
+  "Lab 4": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Tercer Piso"},
+  "Lab 5": {"edificio":"Ingeniería Civil y Laboratorios","piso":"Tercer Piso"},
+
+  "S1": {"edificio":"Aulas S","piso":"Primer Piso"},
+  "S2": {"edificio":"Aulas S","piso":"Primer Piso"},
+  "S3": {"edificio":"Aulas S","piso":"Primer Piso"},
+  "S4": {"edificio":"Aulas S","piso":"Primer Piso"},
+
+  "S5": {"edificio":"Aulas S","piso":"Segundo Piso"},
+  "S6": {"edificio":"Aulas S","piso":"Segundo Piso"},
+  "S7": {"edificio":"Aulas S","piso":"Segundo Piso"},
+  "S8": {"edificio":"Aulas S","piso":"Segundo Piso"},
+
+  "A1-1": {"edificio":"Edificio de Aulas","piso":"Primer Piso"},
+  "A1-2": {"edificio":"Edificio de Aulas","piso":"Primer Piso"},
+  "A1-3": {"edificio":"Edificio de Aulas","piso":"Primer Piso"},
+  "A1-4": {"edificio":"Edificio de Aulas","piso":"Primer Piso"},
+
+  "Auditorio Antonio Salgado": {"edificio":"Edificio de Aulas","piso":"Primer Piso"},
+
+  "A2-5": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+  "A2-6": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+  "A2-7": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+  "A2-8": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+  "A2-9": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+
+  "Biblioteca": {"edificio":"Edificio de Aulas","piso":"Segundo Piso"},
+
+  "A3-14": {"edificio":"Edificio de Aulas","piso":"Tercer Piso"},
+  "A3-15": {"edificio":"Edificio de Aulas","piso":"Tercer Piso"},
+  "A3-16": {"edificio":"Edificio de Aulas","piso":"Tercer Piso"},
+  "A3-17": {"edificio":"Edificio de Aulas","piso":"Tercer Piso"},
+  "A3-22": {"edificio":"Edificio de Aulas","piso":"Tercer Piso"},
+
+  "Posgrado A": {"edificio":"Edificio de Aulas","piso":"Cuarto Piso"},
+  "Posgrado B": {"edificio":"Edificio de Aulas","piso":"Cuarto Piso"}
+}

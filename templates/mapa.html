@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UCE-ClassFinder Pro</title>
+
+    <link rel="stylesheet" 
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link rel="stylesheet" 
+        href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css"/>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        #panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 280px;
+            background: rgba(255,255,255,0.95);
+            padding: 16px;
+            z-index: 999;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-box {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .logo-box img {
+            width: 60px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #1e88e5, #1565c0);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.03);
+        }
+
+      .info-card {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        button {
+            padding: 8px;
+            background: #1e88e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="panel">
+
+    <div class="logo-box">
+        <img src="{{ url_for('static', filename='ima/logo_uce.png') }}">
+
+        <h2>UCE-ClassFinder</h2>
+
+    </div>
+
+    <div class="info-card">
+        <strong>Aula seleccionada:</strong>
+        <p>{{ destino }}</p>
+        <input type="hidden" id="destino" value="{{ destino }}">
+    </div>
+
+    <div class="info-card">
+
+        <strong>Cambiar destino:</strong>
+
+        <select id="nuevoDestino">
+
+            {% for aula in destinos %}
+                <option value="{{ aula }}">
+                    {{ aula }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <button onclick="cambiarDestino()">
+            🚀 Ir a nueva aula
+        </button>
+
+    </div>
+
+    <button onclick="iniciar()">
+        Iniciar navegación
+    </button>
+
+    <div class="info-card">
+        <p id="estado">Listo</p>
+        <p id="instruccion">
+            Esperando navegación...
+        </p>
+        <hr>
+        <p id="distanciaRuta">
+            📏 Distancia: -
+        </p>
+        <p id="tiempoRuta">
+            ⏱ Tiempo estimado: -
+        </p>
+    </div>
+
+    <div id="resultado" style="display:none; margin-top:10px;">
+        <h3>Ruta generada</h3>
+
+        <p id="infoDestino"></p>
+        <p id="infoEdificio"></p>
+        <p id="infoPiso">Piso: Planta Baja</p>
+        <p id="entradaDetectada"></p>
+
+        <button onclick="mostrarRuta()">🚀 Ver ruta en mapa</button>
+        <button onclick="volverInicio()">⬅ Volver</button>
+    </div>
+
+    <div class="info-card">
+        <button onclick="window.location.href='/'">
+            ⬅ Regresar al inicio
+        </button>
+    </div>
+
+</div>
+
+<div id="topbar">
+    UCE-ClassFinder • Sistema de Navegación Inteligente
+</div>
+
+<div id="map"></div>
+
+
+<script>
+
+    const NODOS = {{ nodos|tojson }};
+    const GRAFO = {{ grafo|tojson }};
+    const DESTINOS = {{ destinos|tojson }};
+    const ENTRADAS = {{ entradas|tojson }};
+    var entrada = null;
+    var posicionActual = null;
+
+    var map = L.map('map').setView([-0.198193, -78.503883], 19);
+        
+    var lineaRuta = null;
+    var controlRuta = null;
+    var marcadorDestino = null;
+
+    navigator.geolocation.getCurrentPosition(
+    function(posicion){
+        entrada = [
+            posicion.coords.latitude,
+            posicion.coords.longitude
+        ];
+        
+        posicionActual = entrada;
+
+        let entradaMasCercana = buscarEntradaMasCercana();
+        document.getElementById("entradaDetectada").innerHTML =
+        "Entrada detectada: " + entradaMasCercana;
+
+        console.log(
+            "Entrada cercana:",
+            entradaMasCercana
+        );
+
+        usuario.setLatLng(entrada);
+        map.setView(entrada, 19);
+        document.getElementById("estado").innerText =
+            "📍 Ubicación detectada";
+    },
+
+    function(error){
+        document.getElementById("estado").innerText =
+            "❌ No se pudo obtener la ubicación";
+    });
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 20
+    }).addTo(map);
+
+    map.on('click', function(e) {
+    console.log(
+        e.latlng.lat.toFixed(6) + ", " +
+        e.latlng.lng.toFixed(6)
+        );
+    });
+
+    var usuario = L.marker([0,0], {
+        icon: L.divIcon({
+            className: 'flecha',
+            html: `
+                <div style="
+                width:18px;
+                height:18px;
+                background:#1976d2;
+                border:4px solid white;
+                border-radius:50%;
+                box-shadow:0 0 12px rgba(0,0,0,.5);
+                "></div>
+                `,
+            iconSize: [40,40]
+        })
+    }).addTo(map);
+
+    var rutaCompleta = [];
+    var i = 0;
+
+    function distancia(a, b) {
+        const R = 6371e3;
+
+        const lat1 = a[0] * Math.PI / 180;
+        const lat2 = b[0] * Math.PI / 180;
+
+        const dLat = (b[0] - a[0]) * Math.PI / 180;
+        const dLon = (b[1] - a[1]) * Math.PI / 180;
+
+        const x =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+        return R * c;
+    }
+
+    function calcularDistanciaRuta(ruta){
+        let total = 0;
+        for(let i = 0; i < ruta.length - 1; i++){
+            total += distancia(
+                ruta[i],
+                ruta[i+1]
+            );
+        }
+        return Math.round(total);
+    }
+
+    function buscarEntradaMasCercana(){
+        let mejor = null;
+        let menor = Infinity;
+
+        ENTRADAS.forEach(entradaCampus => {
+
+            let d = distancia(
+                entrada,
+                [entradaCampus.lat, entradaCampus.lng]
+            );
+            console.log(
+                entradaCampus.id,
+                d
+            );
+            if(d < menor){
+                menor = d;
+                mejor = entradaCampus.id;
+            }
+        });
+
+        console.log("ENTRADA ELEGIDA:", mejor);
+        return mejor;
+    }
+
+    function buscarNodoMasCercano(){
+        let mejor = null;
+        let menor = Infinity;
+
+        for(let nodo in NODOS){
+            if(nodo.startsWith("E"))
+                continue;
+
+           let d = distancia(
+                posicionActual,
+                [
+                    NODOS[nodo].lat,
+                    NODOS[nodo].lng
+                ]
+            );
+
+            if(d < menor){
+
+                menor = d;
+                mejor = nodo;
+            }
+        }
+        
+        console.log(
+            "NODO MÁS CERCANO:",
+            mejor
+        );
+        return mejor;
+    }
+
+    i=0;
+    function moverUsuario() {
+       if (i >= rutaCompleta.length - 1) {
+            posicionActual =
+                rutaCompleta[rutaCompleta.length - 1];
+            document.getElementById("estado").innerText =
+                "✔ Llegaste al destino";
+            return;
+        }
+
+        let inicio = rutaCompleta[i];
+        let fin = rutaCompleta[i + 1];
+
+        let pasos = 60;
+        let pasoActual = 0;
+
+        function animarPaso() {
+            if (pasoActual >= pasos) {
+                i++;
+                setTimeout(moverUsuario, 200);
+                return;
+            }
+
+            let lat = inicio[0] + (fin[0] - inicio[0]) * (pasoActual / pasos);
+            let lng = inicio[1] + (fin[1] - inicio[1]) * (pasoActual / pasos);
+
+            usuario.setLatLng([lat, lng]);
+            map.panTo([lat, lng], {
+                animate: true,
+                duration: 0.2
+            });
+
+            pasoActual++;
+            setTimeout(animarPaso,60);
+
+            let angle = Math.atan2(
+                fin[1] - inicio[1],
+                fin[0] - inicio[0]
+            ) * 180 / Math.PI;
+
+            let dist = distancia(inicio, fin);
+            let metros = Math.round(dist);
+
+            document.getElementById("instruccion").innerText =
+                "➡ Camina aproximadamente " + metros + " metros hacia el siguiente punto";
+
+        /*
+            if (usuario.getElement()) {
+                usuario.getElement().style.transform = `rotate(${angle}deg)`;
+            }
+                */
+        }
+
+        animarPaso();
+
+        document.getElementById("estado").innerText =
+            "Moviéndose hacia punto " + (i + 2);
+    }
+
+    function iniciar(){
+
+        if(!entrada){
+            alert("Espera a que se detecte tu ubicación");
+            return;
+        }
+
+        if(lineaRuta){
+            map.removeLayer(lineaRuta);
+        }
+
+        if(controlRuta){
+            map.removeControl(controlRuta);
+        }
+
+        if(marcadorDestino){
+            map.removeLayer(marcadorDestino);
+        }
+
+        let aula =
+            document.getElementById("destino").value;
+
+        let nodoDestino =
+            DESTINOS[aula];
+
+        let centroUCE = [
+            -0.198193,
+            -78.503883
+        ];
+
+       let distanciaCampus = distancia(
+            posicionActual,
+            centroUCE
+        );
+
+        console.log(
+            "Distancia al campus:",
+            distanciaCampus
+        );
+
+        let nodoInicio;
+
+        if(distanciaCampus < 500){
+
+            nodoInicio =
+                    buscarNodoMasCercano();
+
+                document.getElementById("entradaDetectada").innerHTML =
+                    "📍 Dentro del campus";
+
+            }else{
+
+                nodoInicio =
+                    buscarMejorEntrada(
+                        nodoDestino
+                    );
+
+                document.getElementById("entradaDetectada").innerHTML =
+                    "🚪 Mejor entrada calculada";
+            }
+
+        if(distanciaCampus >= 500){
+
+            console.log("nodoInicio =", nodoInicio);
+            console.log("NODOS[nodoInicio] =", NODOS[nodoInicio]);
+
+            controlRuta = L.Routing.control({
+                waypoints: [
+                    L.latLng(
+                        entrada[0],
+                        entrada[1]
+                    ),
+                    L.latLng(
+                        NODOS[nodoInicio].lat,
+                        NODOS[nodoInicio].lng
+                    )
+                ],
+
+                addWaypoints:false,
+                draggableWaypoints:false,
+                routeWhileDragging:false,
+                show:false,
+
+                createMarker:function(){
+                    return null;
+                }
+
+            }).addTo(map);
+
+        }
+
+        let rutaNodos =
+            dijkstra(
+                nodoInicio,
+                nodoDestino
+            );
+
+            console.log(rutaNodos);
+
+        rutaCompleta = [];
+
+            rutaNodos.forEach(nodo=>{
+                rutaCompleta.push([
+                    NODOS[nodo].lat,
+                    NODOS[nodo].lng
+                ]);
+            });
+
+        let metrosRuta =
+            calcularDistanciaRuta(rutaCompleta);
+
+        let minutos =
+            Math.ceil(metrosRuta / 80);
+
+        document.getElementById("distanciaRuta").innerText =
+            "📏 Distancia: " + metrosRuta + " metros";
+
+        document.getElementById("tiempoRuta").innerText =
+            "⏱ Tiempo estimado caminando: " + minutos + " minutos";
+
+        lineaRuta = L.polyline(
+            rutaCompleta,
+            {
+                color:'green',
+                weight:8
+            }
+        ).addTo(map);
+
+        marcadorDestino = L.marker([
+            NODOS[nodoDestino].lat,
+            NODOS[nodoDestino].lng
+        ]).addTo(map);
+
+        marcadorDestino.bindPopup(
+            "Destino: " + aula
+        );
+
+        map.setView(
+            rutaCompleta[0],
+            18
+        );
+        
+        i=0;
+        moverUsuario();
+
+        console.log("Nodo inicial:", nodoInicio);
+    }
+
+    let capasGrafo = [];
+
+    function dibujarGrafo() {
+        borrarGrafo();
+        Object.keys(GRAFO).forEach(nodo => {
+            GRAFO[nodo].forEach(vecino => {
+
+                let A = NODOS[nodo];
+                let B = NODOS[vecino];
+
+                if(!A || !B) return;
+
+                let mid = [
+                    (A.lat + B.lat)/2,
+                    (A.lng + B.lng)/2
+                ];
+
+               let linea1 = L.polyline([A, mid], {
+                color: "#0026e3",
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+
+            let linea2 = L.polyline([mid, B], {
+                color: "#0026e3",
+                weight: 4,
+                opacity: 0.8
+            }).addTo(map);
+
+                capasGrafo.push(linea1);
+                capasGrafo.push(linea2);
+            });
+        });
+    }
+
+    function borrarGrafo() {
+        capasGrafo.forEach(l => map.removeLayer(l));
+        capasGrafo = [];
+    }
+
+    function volverInicio() {
+        document.getElementById("resultado").style.display = "none";
+    }
+
+    function cambiarDestino(){
+
+        let nuevaAula =
+            document.getElementById("nuevoDestino").value;
+
+        document.getElementById("destino").value =
+            nuevaAula;
+
+        iniciar();
+    }
+
+    function buscarAula() {
+
+        let texto = document
+            .getElementById("consultaAula")
+            .value
+            .toUpperCase();
+
+        const aulas = [
+            "SALA A",
+            "SALA B",
+            "SALA 1",
+            "SALA 2",
+            "R7",
+            "R8",
+            "LAB 1",
+            "LAB 2",
+            "LAB 3",
+            "LAB 4",
+            "LAB 5",
+            "S1",
+            "S2",
+            "S3",
+            "S4",
+            "S5",
+            "S6",
+            "S7",
+            "S8",
+            "A1-1",
+            "A1-2",
+            "A1-3",
+            "A1-4",
+            "AUDITORIO ANTONIO SALGADO",
+            "A2-5",
+            "A2-6",
+            "A2-7",
+            "A2-8",
+            "A2-9",
+            "BIBLIOTECA",
+            "A3-14",
+            "A3-15",
+            "A3-16",
+            "A3-17",
+            "A3-22",
+            "POSGRADO A",
+            "POSGRADO B"
+        ];
+
+        let encontrada = null;
+
+        for (let aula of aulas) {
+            if (texto.includes(aula)) {
+                encontrada = aula;
+                break;
+            }
+        }
+
+        if (encontrada) {
+            document.getElementById("destino").value = encontrada;
+
+            document.getElementById("infoDestino").innerText =
+                "Destino: " + encontrada;
+
+            alert("Aula encontrada: " + encontrada);
+            setTimeout(() => {
+                iniciar();
+            }, 300);
+        } else {
+            alert("No encontré esa aula.");
+        }
+    }
+
+    function dijkstra(inicio, fin){
+
+        let distancias = {};
+        let anterior = {};
+        let pendientes = [];
+
+        for(let nodo in GRAFO){
+            distancias[nodo] = Infinity;
+            anterior[nodo] = null;
+        }
+
+        distancias[inicio] = 0;
+        pendientes.push(inicio);
+
+        while(pendientes.length){
+
+            pendientes.sort(
+                (a,b)=>distancias[a]-distancias[b]
+            );
+
+            let actual = pendientes.shift();
+
+            if(actual === fin)
+                break;
+
+            for(let vecino of GRAFO[actual]){
+
+                let nueva =
+                    distancias[actual] +
+                    distancia(
+                        [NODOS[actual].lat,NODOS[actual].lng],
+                        [NODOS[vecino].lat,NODOS[vecino].lng]
+                    );
+
+                if(nueva < distancias[vecino]){
+
+                    distancias[vecino] = nueva;
+                    anterior[vecino] = actual;
+
+                    if(!pendientes.includes(vecino))
+                        pendientes.push(vecino);
+                }
+            }
+        }
+
+        let ruta = [];
+        let actual = fin;
+
+        while(actual){
+            ruta.unshift(actual);
+            actual = anterior[actual];
+        }
+        return ruta;
+    }
+
+               console.log(
+            "Distancia interna:",
+            calcularDistanciaInterna(
+                nodoInicio,
+                nodoDestino
+            )
+        );s
+    function calcularDistanciaInterna(nodoInicio, nodoDestino){
+        let ruta = dijkstra(
+            nodoInicio,
+            nodoDestino
+        );
+        let metros = 0;
+
+        for(let i = 0; i < ruta.length - 1; i++){
+            let A = ruta[i];
+            let B = ruta[i + 1];
+            metros += distancia(
+                [NODOS[A].lat, NODOS[A].lng],
+                [NODOS[B].lat, NODOS[B].lng]
+            );
+        }
+        return metros;
+    }
+
+    function obtenerNodoEntrada(id){
+
+        console.log("ID RECIBIDO:", id);
+
+        if(id === "america"){
+            console.log("DEVUELVO E1");
+            return "E1";
+        }
+
+        if(id === "quimica"){
+            console.log("DEVUELVO E2");
+            return "E2";
+        }
+
+        if(id === "bolivia"){
+            console.log("DEVUELVO E3");
+            return "E3";
+        }
+
+        if(id === "ingenieria"){
+            console.log("DEVUELVO E4");
+            return "E4";
+        }
+
+        if(id === "biblioteca"){
+            console.log("DEVUELVO E5");
+            return "E5";
+        }
+
+        if(id === "Aulas A"){
+            console.log("DEVUELVO E6");
+            return "E6";
+        }
+
+        console.log("NO COINCIDE NINGUNO");
+    }
+
+    function buscarMejorEntrada(nodoDestino){
+
+        let mejorEntrada = null;
+        let mejorNodo = null;
+        let menorDistancia = Infinity;
+
+        ENTRADAS.forEach(entradaCampus => {
+
+            let nodoEntrada =
+                obtenerNodoEntrada(
+                    entradaCampus.id
+                );
+
+            let distanciaExterior =
+            distancia(
+                posicionActual,
+                [
+                    entradaCampus.lat,
+                    entradaCampus.lng
+                ]
+            );
+
+            let distanciaInterior =
+                calcularDistanciaInterna(
+                    nodoEntrada,
+                    nodoDestino
+                );
+
+            let total =
+                distanciaExterior +
+                distanciaInterior;
+
+            console.log(
+                entradaCampus.id,
+                "Exterior:",
+                Math.round(distanciaExterior),
+                "Interior:",
+                Math.round(distanciaInterior),
+                "Total:",
+                Math.round(total)
+            );
+
+            if(total < menorDistancia){
+
+                menorDistancia = total;
+                mejorEntrada = entradaCampus.id;
+                mejorNodo = nodoEntrada;
+            }
+        });
+
+        console.log(
+            "MEJOR ENTRADA:",
+            mejorEntrada
+        );
+
+        return mejorNodo;
+    }
+
+</script>
+</body>
+</html>
